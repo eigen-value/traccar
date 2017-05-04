@@ -61,14 +61,37 @@ public class TeltonikaProtocolDecoder extends BaseProtocolDecoder {
     public static final int CODEC_FM4X00 = 0x08;
     public static final int CODEC_12 = 0x0C;
 
-    private void decodeSerial(Position position, ChannelBuffer buf) {
+    public static final String PREAMBLE_1 = "&";
+    public static final String PREAMBLE_2 = "";
+    public static final String PREAMBLE_3 = "";
+    public static final String PREAMBLE = PREAMBLE_1.concat(PREAMBLE_2).concat(PREAMBLE_3);
+    public static final String OID_REGEX = "^".concat(PREAMBLE).concat("OID=.*$");
+    public static final String TKT_REGEX = "^".concat(PREAMBLE).concat("TKT=.*$");
+    public static final String TKT_ACK = PREAMBLE.concat("TKT ACK");
+    public static final String TICKETS_TERMINATOR = "\r\n";
+
+    private void decodeSerial(Position position, ChannelBuffer buf, Channel channel) {
 
         getLastLocation(position, null);
 
         position.set(Position.KEY_TYPE, buf.readUnsignedByte());
 
-        position.set("command", buf.readBytes(buf.readInt()).toString(StandardCharsets.US_ASCII));
+        String data = buf.readBytes(buf.readInt()).toString(StandardCharsets.US_ASCII);
 
+        if (data.matches(OID_REGEX)){
+            position.set("oid", data.substring(PREAMBLE.length() + 4));
+            // no ACK for OID
+        }else if(data.split(TICKETS_TERMINATOR)[0].matches(TKT_REGEX)){
+            position.set("tkt_list",data.substring(PREAMBLE.length() + 4, data.length()-TICKETS_TERMINATOR.length()-4));
+            if (channel != null){
+                String crc = data.substring(data.lastIndexOf(TICKETS_TERMINATOR) + TICKETS_TERMINATOR.length());
+                String ack = TKT_ACK.concat(crc);
+                ChannelBuffer response = TeltonikaProtocolEncoder.encodeString(ack);
+                channel.write(response);
+            }
+        }else{
+            position.set("command", data);
+        }
     }
 
     private void decodeParameter(Position position, int id, ChannelBuffer buf, int length) {
@@ -266,7 +289,7 @@ public class TeltonikaProtocolDecoder extends BaseProtocolDecoder {
             position.setDeviceId(deviceSession.getDeviceId());
 
             if (codec == CODEC_12) {
-                decodeSerial(position, buf);
+                decodeSerial(position, buf, channel);
             } else {
                 decodeLocation(position, buf, codec);
             }

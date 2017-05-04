@@ -26,6 +26,24 @@ import java.nio.charset.StandardCharsets;
 
 public class TeltonikaProtocolEncoder extends BaseProtocolEncoder {
 
+    static ChannelBuffer encodeString(String content){
+        ChannelBuffer buf = ChannelBuffers.dynamicBuffer();
+
+        buf.writeInt(0);
+        buf.writeInt(content.length() + 10);
+        buf.writeByte(TeltonikaProtocolDecoder.CODEC_12);
+        buf.writeByte(1); // quantity
+        buf.writeByte(5); // type
+        buf.writeInt(content.length() + 2);
+        buf.writeBytes(content.getBytes(StandardCharsets.US_ASCII));
+        buf.writeByte('\r');
+        buf.writeByte('\n');
+        buf.writeByte(1); // quantity
+        buf.writeInt(Checksum.crc16(Checksum.CRC16_IBM, buf.toByteBuffer(8, buf.writerIndex() - 8)));
+
+        return buf;
+    }
+
     private ChannelBuffer encodeContent(String content) {
 
         ChannelBuffer buf = ChannelBuffers.dynamicBuffer();
