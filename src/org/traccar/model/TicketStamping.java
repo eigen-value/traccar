@@ -25,6 +25,8 @@ import java.util.Date;
 public class TicketStamping extends Message{
 
     public static final String TICKET_FIELD_SEPARATOR = ",";
+    public static final String TICKET_FIELD_SECONDARY_SEPARATOR = " ";
+    public static final int MIN_TICKET_FIELDS = 16;
     public static final String MAG_REGEX = "^MAG.*?";
     public static final String CSC_REGEX = "^CSC.*?";
 
@@ -32,7 +34,18 @@ public class TicketStamping extends Message{
 
 //      parse fields depending on tkt kind, with separator
 
-        String[] fields = ticket.split(TICKET_FIELD_SEPARATOR);
+        String[] fields;
+
+        if (ticket.contains(TICKET_FIELD_SEPARATOR)) {
+            fields = ticket.split(TICKET_FIELD_SEPARATOR);
+        } else {
+            fields = ticket.split(TICKET_FIELD_SECONDARY_SEPARATOR);
+        }
+
+        if (fields.length < MIN_TICKET_FIELDS){
+            Log.warning("Unable to parse ticket: ".concat(ticket));
+            return;
+        }
 
         String obt_name = fields[3];
         this.setObtName(obt_name);
@@ -95,11 +108,11 @@ public class TicketStamping extends Message{
             int ticket_duration = Integer.parseInt(fields[17]);
             this.setTicketDuration(ticket_duration);
 
-            String obl_result = fields[18];
+            String obl_result = fields[18].replaceFirst(";$","");
             this.setOblResult(obl_result);
 
 
-        }else if (fields[0].equals(CSC_REGEX)){
+        }else if (fields[0].matches(CSC_REGEX)){
 
             String ticket_type = "";
             this.setTicketType(ticket_type);
@@ -107,7 +120,7 @@ public class TicketStamping extends Message{
             int ticket_duration = 0;
             this.setTicketDuration(ticket_duration);
 
-            String obl_result = fields[16];
+            String obl_result = fields[16].replaceFirst(";$","");
             this.setOblResult(obl_result);
 
         }
@@ -312,23 +325,23 @@ public class TicketStamping extends Message{
         this.oblResult = oblResult;
     }
 
-    private Date dumpTs;
-
-    public Date getDumpTs() {
-        if (dumpTs != null) {
-            return new Date(dumpTs.getTime());
-        } else {
-            return null;
-        }
-    }
-
-    public void setDumpTs(Date dumpTs) {
-        if (dumpTs != null) {
-            this.dumpTs = new Date(dumpTs.getTime());
-        } else {
-            this.dumpTs = null;
-        }
-    }
+//    private Date dumpTs;
+//
+//    public Date getDumpTs() {
+//        if (dumpTs != null) {
+//            return new Date(dumpTs.getTime());
+//        } else {
+//            return null;
+//        }
+//    }
+//
+//    public void setDumpTs(Date dumpTs) {
+//        if (dumpTs != null) {
+//            this.dumpTs = new Date(dumpTs.getTime());
+//        } else {
+//            this.dumpTs = null;
+//        }
+//    }
 
     private Date serverTime;
 
@@ -348,14 +361,14 @@ public class TicketStamping extends Message{
         }
     }
 
-    private int obObtId;
-
-    public int getObObtId() {
-        return obObtId;
-    }
-
-    public void setObObtId(int obObtId) {
-        this.obObtId = obObtId;
-    }
+//    private int obObtId;
+//
+//    public int getObObtId() {
+//        return obObtId;
+//    }
+//
+//    public void setObObtId(int obObtId) {
+//        this.obObtId = obObtId;
+//    }
 
 }
