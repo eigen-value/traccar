@@ -23,4 +23,16 @@
     <entry key='database.user'>sa</entry>
     <entry key='database.password'></entry>
 
+
+    <entry key='database.insertDriverStamping'>
+        INSERT INTO drivers_stampings (deviceId, imei, card_serial, stmp_ts, wrt_ts)
+        VALUES (:deviceId, :imei, :cardSerial, :stmpTs, :now)
+    </entry>
+
+    <entry key='database.insertTicketStamping'>
+        INSERT INTO ob_oblits (obt_name, ticket_kind, nrecord, obl_ts, zone, line_code, line_name, vehicle_code, vehicle_name, ring, stoppoint_code, stoppoint_name, driver_code, driver_name, ticket_serial, ticket_id, ticket_type, ticket_duration, obl_result, dump_ts, deviceId, wrt_ts, ob_obt_id)
+        VALUES (:obtName, :tktKind, :numRecord, :oblTs, :zone, :lineCode, :lineName, :vehicleCode, :vehiclename, :ring, :stopPointCode, :stopPointName, :driverCode, :driverName, :ticketSerial, :ticketId, :ticketType, :ticketDuration, :oblResult, :dumpTs, :deviceId, :now, :obOblId)
+    </entry>
+
+
 </properties>

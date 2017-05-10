@@ -82,7 +82,8 @@ public class TeltonikaProtocolDecoder extends BaseProtocolDecoder {
             position.set("oid", data.substring(PREAMBLE.length() + 4));
             // no ACK for OID
         }else if(data.split(TICKETS_TERMINATOR)[0].matches(TKT_REGEX)){
-            position.set("tkt_list",data.substring(PREAMBLE.length() + 4, data.length()-TICKETS_TERMINATOR.length()-4));
+            position.set("tkt_list", data.substring(PREAMBLE.length() + 4, data.length()-TICKETS_TERMINATOR.length()-4));
+            position.set("tkt_terminator", TICKETS_TERMINATOR);
             if (channel != null){
                 String crc = data.substring(data.lastIndexOf(TICKETS_TERMINATOR) + TICKETS_TERMINATOR.length());
                 String ack = TKT_ACK.concat(crc);

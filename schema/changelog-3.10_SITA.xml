@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd"
+  logicalFilePath="changelog-3.10">
+
+  <changeSet author="lucio-rossi" id="changelog-3.10-sita">
+
+    <createTable tableName="drivers_stampings">
+      <column name="id" type="INT" autoIncrement="true">
+        <constraints primaryKey="true" />
+      </column>
+      <column name="imei" type="VARCHAR(255)">
+        <constraints nullable="false" />
+      </column>
+      <column name="card_serial" type="VARCHAR(255)">
+        <constraints nullable="false" />
+      </column>
+      <column name="stmp_ts" type="TIMESTAMP">
+        <constraints nullable="false" />
+      </column>
+      <column name="wrt_ts" type="TIMESTAMP">
+        <constraints nullable="false" />
+      </column>
+      <column name="device_id" type="INT">
+        <constraints nullable="false" />
+      </column>
+    </createTable>
+
+    <createTable tableName="ob_oblits">
+
+    </createTable>
+
+  </changeSet>
+
+
+</databaseChangeLog>
