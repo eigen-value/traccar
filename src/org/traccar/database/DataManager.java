@@ -283,6 +283,7 @@ public class DataManager {
             }
         }
         position.getProtocol();
+
         if (position.getString("oid") != null){
             DriverStamping driverStamping = new DriverStamping();
             driverStamping.setDeviceId(position.getDeviceId());
@@ -290,7 +291,22 @@ public class DataManager {
 
 //            parse these from oid command content
             driverStamping.setCardSerial(position.getString("oid"));
-//            driverStamping.setStmpTs();
+            driverStamping.setStmpTs(position.getDeviceTime());
+
+            driverStamping.setId(QueryBuilder.create(dataSource, getQuery("database.insertDriverStamping"), true)
+                    .setDate("now", new Date())
+                    .setObject(driverStamping)
+                    .executeUpdate());
+        }
+
+        if (position.getString(Position.KEY_RFID) != null){
+            DriverStamping driverStamping = new DriverStamping();
+            driverStamping.setDeviceId(position.getDeviceId());
+            driverStamping.setImei(connectedDevice.getUniqueId());
+
+//            parse these from oid command content
+            driverStamping.setCardSerial(position.getString(Position.KEY_RFID));
+            driverStamping.setStmpTs(position.getDeviceTime());
 
             driverStamping.setId(QueryBuilder.create(dataSource, getQuery("database.insertDriverStamping"), true)
                     .setDate("now", new Date())
