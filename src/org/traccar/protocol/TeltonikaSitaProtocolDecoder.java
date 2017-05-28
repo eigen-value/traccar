@@ -36,9 +36,9 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
-public class TeltonikaProtocolDecoder extends BaseProtocolDecoder {
+public class TeltonikaSitaProtocolDecoder extends BaseProtocolDecoder {
 
-    public TeltonikaProtocolDecoder(TeltonikaProtocol protocol) {
+    public TeltonikaSitaProtocolDecoder(TeltonikaSitaProtocol protocol) {
         super(protocol);
     }
 
@@ -70,8 +70,8 @@ public class TeltonikaProtocolDecoder extends BaseProtocolDecoder {
     public static final String PREAMBLE = PREAMBLE_1.concat(PREAMBLE_2).concat(PREAMBLE_3);
     public static final String OID_REGEX = "^".concat(PREAMBLE).concat("OID=.*$");
     public static final String TKT_REGEX = "^".concat(PREAMBLE).concat("TKT=.*$");
+    public static final String DUMP_REGEX = "^".concat(PREAMBLE).concat("DUMPALL");
     public static final String TKT_ACK = PREAMBLE.concat("TKT ACK");
-    public static final String DO_DUMP = PREAMBLE.concat("DO DUMP");
     public static final String TICKETS_TERMINATOR = "\r\n";
 
     private void decodeSerial(Position position, ChannelBuffer buf, Channel channel) {
@@ -93,6 +93,11 @@ public class TeltonikaProtocolDecoder extends BaseProtocolDecoder {
                 String ack = TKT_ACK.concat(crc);
                 ChannelBuffer response = TeltonikaProtocolEncoder.encodeString(ack);
                 channel.write(response);
+            }
+        }else if(data.matches(DUMP_REGEX)){
+            DeviceManager deviceManager = Context.getDeviceManager();
+            for (Device device: deviceManager.getAllDevices()){
+                device.set("dump", true);
             }
         }else{
             position.set("command", data);
@@ -313,15 +318,6 @@ public class TeltonikaProtocolDecoder extends BaseProtocolDecoder {
                 ChannelBuffer response = ChannelBuffers.directBuffer(4);
                 response.writeInt(count);
                 channel.write(response);
-
-//                Send DO_DUMP command if device is in dump mode
-                DeviceManager deviceManager = Context.getDeviceManager();
-                Device device = deviceManager.getDeviceById(deviceSession.getDeviceId());
-                if (device.getBoolean("dump")){
-                    ChannelBuffer dump_command = TeltonikaProtocolEncoder.encodeString(DO_DUMP);
-                    channel.write(dump_command);
-                    device.set("dump", false);
-                }
             }
         }
 
