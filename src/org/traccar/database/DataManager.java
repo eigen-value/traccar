@@ -299,13 +299,15 @@ public class DataManager {
                     .executeUpdate());
         }
 
-        if (position.getString(Position.KEY_RFID) != null){
+        if (position.getLong(Position.KEY_RFID) != 0){
             DriverStamping driverStamping = new DriverStamping();
             driverStamping.setDeviceId(position.getDeviceId());
             driverStamping.setImei(connectedDevice.getUniqueId());
 
 //            parse these from oid command content
-            driverStamping.setCardSerial(position.getString(Position.KEY_RFID));
+            long rfid = position.getLong(Position.KEY_RFID);
+            String rfid_string = Long.toString(rfid);
+            driverStamping.setCardSerial(rfid_string);
             driverStamping.setStmpTs(position.getDeviceTime());
 
             driverStamping.setId(QueryBuilder.create(dataSource, getQuery("database.insertDriverStamping"), true)
