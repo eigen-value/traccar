@@ -25,7 +25,7 @@
 
 
     <entry key='database.insertDriverStamping'>
-        INSERT INTO drivers_stampings (deviceId, imei, card_serial, stmp_ts, wrt_ts)
+        INSERT INTO drivers_stampings (device_id, imei, card_serial, stmp_ts, wrt_ts)
         VALUES (:deviceId, :imei, :cardSerial, :stmpTs, :now)
     </entry>
 
