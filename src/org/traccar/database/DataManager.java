@@ -36,7 +36,26 @@ import liquibase.resource.ResourceAccessor;
 
 import org.traccar.Config;
 import org.traccar.helper.Log;
-import org.traccar.model.*;
+import org.traccar.model.AttributeAlias;
+import org.traccar.model.Calendar;
+import org.traccar.model.CalendarPermission;
+import org.traccar.model.Device;
+import org.traccar.model.DevicePermission;
+import org.traccar.model.Event;
+import org.traccar.model.Geofence;
+import org.traccar.model.Group;
+import org.traccar.model.GroupGeofence;
+import org.traccar.model.GroupPermission;
+import org.traccar.model.Notification;
+import org.traccar.model.Position;
+import org.traccar.model.Server;
+import org.traccar.model.Statistics;
+import org.traccar.model.User;
+import org.traccar.model.UserPermission;
+import org.traccar.model.DeviceGeofence;
+import org.traccar.model.GeofencePermission;
+import org.traccar.model.DriverStamping;
+import org.traccar.model.TicketStamping;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -277,19 +296,19 @@ public class DataManager {
         Device connectedDevice = new Device();
 
         Collection<Device> devicesCollection = getAllDevices();
-        for (Device device: devicesCollection){
+        for (Device device: devicesCollection) {
             if (device.getId() == position.getDeviceId()) {
                 connectedDevice = device;
             }
         }
         position.getProtocol();
 
-        if (position.getString("oid") != null){
+        if (position.getString("oid") != null) {
             DriverStamping driverStamping = new DriverStamping();
             driverStamping.setDeviceId(position.getDeviceId());
             driverStamping.setImei(connectedDevice.getUniqueId());
 
-//            parse these from oid command content
+//          parse these from oid command content
             driverStamping.setCardSerial(position.getString("oid"));
             driverStamping.setStmpTs(position.getDeviceTime());
 
@@ -299,15 +318,15 @@ public class DataManager {
                     .executeUpdate());
         }
 
-        if (position.getLong(Position.KEY_RFID) != 0){
+        if (position.getLong(Position.KEY_RFID) != 0) {
             DriverStamping driverStamping = new DriverStamping();
             driverStamping.setDeviceId(position.getDeviceId());
             driverStamping.setImei(connectedDevice.getUniqueId());
 
-//            parse these from oid command content
+//          parse these from oid command content
             long rfid = position.getLong(Position.KEY_RFID);
-            String rfid_string = Long.toString(rfid);
-            driverStamping.setCardSerial(rfid_string);
+            String rfidString = Long.toString(rfid);
+            driverStamping.setCardSerial(rfidString);
             driverStamping.setStmpTs(position.getDeviceTime());
 
             driverStamping.setId(QueryBuilder.create(dataSource, getQuery("database.insertDriverStamping"), true)
@@ -316,11 +335,11 @@ public class DataManager {
                     .executeUpdate());
         }
 
-        if (position.getString("tkt_list") != null){
-            String tkt_list = position.getString("tkt_list");
-            String tkt_terminator = position.getString("tkt_terminator");
-            String[] tickets = tkt_list.split(tkt_terminator);
-            for (String tkt: tickets){
+        if (position.getString("tkt_list") != null) {
+            String tktList = position.getString("tkt_list");
+            String tktTerminator = position.getString("tkt_terminator");
+            String[] tickets = tktList.split(tktTerminator);
+            for (String tkt: tickets) {
                 TicketStamping ticketStamping = new TicketStamping(tkt);
                 ticketStamping.setId(QueryBuilder.create(dataSource, getQuery("database.insertTicketStamping"), true)
                         .setDate("now", new Date())

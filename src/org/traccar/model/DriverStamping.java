@@ -18,7 +18,7 @@ package org.traccar.model;
 
 import java.util.Date;
 
-public class DriverStamping extends Message{
+public class DriverStamping extends Message {
 
     private String imei;
 

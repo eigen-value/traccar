@@ -22,7 +22,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class TicketStamping extends Message{
+public class TicketStamping extends Message {
 
     public static final String TICKET_FIELD_SEPARATOR = ",";
     public static final String TICKET_FIELD_SECONDARY_SEPARATOR = " ";
@@ -30,7 +30,7 @@ public class TicketStamping extends Message{
     public static final String MAG_REGEX = "^MAG.*?";
     public static final String CSC_REGEX = "^CSC.*?";
 
-    public TicketStamping(String ticket){
+    public TicketStamping(String ticket) {
 
 //      parse fields depending on tkt kind, with separator
 
@@ -42,86 +42,86 @@ public class TicketStamping extends Message{
             fields = ticket.split(TICKET_FIELD_SECONDARY_SEPARATOR);
         }
 
-        if (fields.length < MIN_TICKET_FIELDS){
+        if (fields.length < MIN_TICKET_FIELDS) {
             Log.warning("Unable to parse ticket: ".concat(ticket));
             return;
         }
 
-        String obt_name = fields[3];
-        this.setObtName(obt_name);
+        String obtName = fields[3];
+        this.setObtName(obtName);
 
-        String ticket_kind = fields[0].substring(0, 3);
-        this.setTicketKind(ticket_kind);
+        String ticketKind = fields[0].substring(0, 3);
+        this.setTicketKind(ticketKind);
 
-        int num_record = Integer.parseInt(fields[0].substring(4));
-        this.setNumRecord(num_record);
+        int numRecord = Integer.parseInt(fields[0].substring(4));
+        this.setNumRecord(numRecord);
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss");
         try {
-            Date obl_ts = dateFormat.parse(fields[1].concat(" ").concat(fields[2]));
-            setOblTs(obl_ts);
-        } catch (ParseException s){
+            Date oblTs = dateFormat.parse(fields[1].concat(" ").concat(fields[2]));
+            setOblTs(oblTs);
+        } catch (ParseException s) {
             Log.warning(s);
         }
 
         String zone = fields[4];
         this.setZone(zone);
 
-        String line_code = fields[5];
-        this.setLineCode(line_code);
+        String lineCode = fields[5];
+        this.setLineCode(lineCode);
 
-        String line_name = fields[6];
-        this.setLineName(line_name);
+        String lineName = fields[6];
+        this.setLineName(lineName);
 
-        String vehicle_code = fields[7];
-        this.setVehicleCode(vehicle_code);
+        String vehicleCode = fields[7];
+        this.setVehicleCode(vehicleCode);
 
-        String vehicle_name = fields[8];
-        this.setVehicleName(vehicle_name);
+        String vehicleName = fields[8];
+        this.setVehicleName(vehicleName);
 
         String ring = fields[9];
         this.setRing(ring);
 
-        String stop_point_code = fields[10];
-        this.setStopPointCode(stop_point_code);
+        String stopPointCode = fields[10];
+        this.setStopPointCode(stopPointCode);
 
-        String stop_point_name = fields[11];
-        this.setStopPointName(stop_point_name);
+        String stopPointName = fields[11];
+        this.setStopPointName(stopPointName);
 
-        String driver_code = fields[12];
-        this.setDriverCode(driver_code);
+        String driverCode = fields[12];
+        this.setDriverCode(driverCode);
 
-        String driver_name = fields[13];
-        this.setDriverName(driver_name);
+        String driverName = fields[13];
+        this.setDriverName(driverName);
 
-        long ticket_serial = Long.parseLong(fields[14]);
-        this.setTicketSerial(ticket_serial);
+        long ticketSerial = Long.parseLong(fields[14]);
+        this.setTicketSerial(ticketSerial);
 
-        int ticket_id = Integer.parseInt(fields[15]);
-        this.setTicketId(ticket_id);
+        int ticketId = Integer.parseInt(fields[15]);
+        this.setTicketId(ticketId);
 
-        if (fields[0].matches(MAG_REGEX)){
+        if (fields[0].matches(MAG_REGEX)) {
 
-            String ticket_type = fields[16];
-            this.setTicketType(ticket_type);
+            String ticketType = fields[16];
+            this.setTicketType(ticketType);
 
-            int ticket_duration = Integer.parseInt(fields[17]);
-            this.setTicketDuration(ticket_duration);
+            int ticketDuration = Integer.parseInt(fields[17]);
+            this.setTicketDuration(ticketDuration);
 
-            String obl_result = fields[18].replaceFirst(";$","");
-            this.setOblResult(obl_result);
+            String oblResult = fields[18].replaceFirst(";$", "");
+            this.setOblResult(oblResult);
 
 
-        }else if (fields[0].matches(CSC_REGEX)){
+        } else if (fields[0].matches(CSC_REGEX)) {
 
-            String ticket_type = "";
-            this.setTicketType(ticket_type);
+            String ticketType = "";
+            this.setTicketType(ticketType);
 
-            int ticket_duration = 0;
-            this.setTicketDuration(ticket_duration);
+            int ticketDuration = 0;
+            this.setTicketDuration(ticketDuration);
 
-            String obl_result = fields[16].replaceFirst(";$","");
-            this.setOblResult(obl_result);
+            String oblResult = fields[16].replaceFirst(";$", "");
+            this.setOblResult(oblResult);
 
         }
 

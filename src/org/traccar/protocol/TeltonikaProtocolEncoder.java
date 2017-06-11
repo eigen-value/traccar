@@ -26,7 +26,7 @@ import java.nio.charset.StandardCharsets;
 
 public class TeltonikaProtocolEncoder extends BaseProtocolEncoder {
 
-    static ChannelBuffer encodeString(String content){
+    static ChannelBuffer encodeString(String content) {
         ChannelBuffer buf = ChannelBuffers.dynamicBuffer();
 
         buf.writeInt(0);

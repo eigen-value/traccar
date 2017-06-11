@@ -82,19 +82,20 @@ public class TeltonikaProtocolDecoder extends BaseProtocolDecoder {
 
         String data = buf.readBytes(buf.readInt()).toString(StandardCharsets.US_ASCII);
 
-        if (data.matches(OID_REGEX)){
+        if (data.matches(OID_REGEX)) {
             position.set("oid", data.substring(PREAMBLE.length() + 4));
             // no ACK for OID
-        }else if(data.split(TICKETS_TERMINATOR)[0].matches(TKT_REGEX)){
-            position.set("tkt_list", data.substring(PREAMBLE.length() + 4, data.length()-TICKETS_TERMINATOR.length()-4));
+        } else if (data.split(TICKETS_TERMINATOR)[0].matches(TKT_REGEX)) {
+            position.set("tkt_list", data.substring(PREAMBLE.length()
+                    + 4, data.length() - TICKETS_TERMINATOR.length() - 4));
             position.set("tkt_terminator", TICKETS_TERMINATOR);
-            if (channel != null){
+            if (channel != null) {
                 String crc = data.substring(data.lastIndexOf(TICKETS_TERMINATOR) + TICKETS_TERMINATOR.length());
                 String ack = TKT_ACK.concat(crc);
                 ChannelBuffer response = TeltonikaProtocolEncoder.encodeString(ack);
                 channel.write(response);
             }
-        }else{
+        } else {
             position.set("command", data);
         }
     }
@@ -317,9 +318,9 @@ public class TeltonikaProtocolDecoder extends BaseProtocolDecoder {
 //                Send DO_DUMP command if device is in dump mode
                 DeviceManager deviceManager = Context.getDeviceManager();
                 Device device = deviceManager.getDeviceById(deviceSession.getDeviceId());
-                if (device.getBoolean("dump")){
-                    ChannelBuffer dump_command = TeltonikaProtocolEncoder.encodeString(DO_DUMP);
-                    channel.write(dump_command);
+                if (device.getBoolean("dump")) {
+                    ChannelBuffer dumpCommand = TeltonikaProtocolEncoder.encodeString(DO_DUMP);
+                    channel.write(dumpCommand);
                     device.set("dump", false);
                 }
             }
