@@ -31,6 +31,7 @@ import org.traccar.model.Network;
 import org.traccar.model.Position;
 
 import java.net.SocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.LinkedList;
@@ -130,7 +131,11 @@ public class TeltonikaProtocolDecoder extends BaseProtocolDecoder {
                 position.set(Position.PREFIX_TEMP + 3, buf.readInt() * 0.1);
                 break;
             case 78:
-                position.set(Position.KEY_RFID, buf.readLong());
+                byte[] rfidBytes = new byte[8];
+                buf.readBytes(rfidBytes, 0, 8);
+                Long rfid = parseRfid(rfidBytes);
+//                position.set(Position.KEY_RFID, buf.readLong());
+                position.set(Position.KEY_RFID, rfid);
                 break;
             case 182:
                 position.set(Position.KEY_HDOP, buf.readUnsignedShort() * 0.1);
@@ -361,6 +366,21 @@ public class TeltonikaProtocolDecoder extends BaseProtocolDecoder {
         String imei = buf.readBytes(buf.readUnsignedShort()).toString(StandardCharsets.US_ASCII);
 
         return parseData(channel, remoteAddress, buf, packetId, imei);
+
+    }
+
+    private Long parseRfid(byte[] rfidBytes) {
+
+        ByteBuffer buffer = ByteBuffer.allocate(8);
+        for (int i = 0; i < 4; i++) {
+            buffer.put((byte) 0x00);
+        }
+        for (int i = 0; i < 4; i++) {
+            buffer.put(rfidBytes[i + 3]);
+        }
+
+        buffer.flip();  //need flip
+        return buffer.getLong();
 
     }
 
