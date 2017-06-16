@@ -315,7 +315,7 @@ public class TeltonikaProtocolDecoder extends BaseProtocolDecoder {
                 response.writeShort(packetId);
                 response.writeByte(0x02);
                 channel.write(response, remoteAddress);
-            } else {
+            } else if (codec != CODEC_12) {
                 ChannelBuffer response = ChannelBuffers.directBuffer(4);
                 response.writeInt(count);
                 channel.write(response);
