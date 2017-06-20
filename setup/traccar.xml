@@ -30,7 +30,7 @@
     </entry>
 
     <entry key='database.insertTicketStamping'>
-        INSERT INTO ob_oblits (obt_name, ticket_kind, nrecord, obl_ts, zone, line_code, line_name, vehicle_code, vehicle_name, ring, stoppoint_code, stoppoint_name, driver_code, driver_name, ticket_serial, ticket_id, ticket_type, ticket_duration, obl_result, device_id, wrt_ts)
+        INSERT IGNORE INTO ob_oblits (obt_name, ticket_kind, nrecord, obl_ts, zone, line_code, line_name, vehicle_code, vehicle_name, ring, stoppoint_code, stoppoint_name, driver_code, driver_name, ticket_serial, ticket_id, ticket_type, ticket_duration, obl_result, device_id, wrt_ts)
         VALUES (:obtName, :ticketKind, :numRecord, :oblTs, :zone, :lineCode, :lineName, :vehicleCode, :vehiclename, :ring, :stopPointCode, :stopPointName, :driverCode, :driverName, :ticketSerial, :ticketId, :ticketType, :ticketDuration, :oblResult, :deviceId, :now)
     </entry>
 
