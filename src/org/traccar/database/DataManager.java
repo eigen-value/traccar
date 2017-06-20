@@ -341,6 +341,7 @@ public class DataManager {
             String[] tickets = tktList.split(tktTerminator);
             for (String tkt: tickets) {
                 TicketStamping ticketStamping = new TicketStamping(tkt);
+                ticketStamping.setDeviceId(position.getDeviceId());
                 ticketStamping.setId(QueryBuilder.create(dataSource, getQuery("database.insertTicketStamping"), true)
                         .setDate("now", new Date())
                         .setObject(ticketStamping)
