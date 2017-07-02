@@ -30,11 +30,17 @@ import org.traccar.model.Device;
 import org.traccar.model.Network;
 import org.traccar.model.Position;
 
+import javax.json.Json;
+import javax.json.JsonException;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+import java.io.StringReader;
 import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 public class TeltonikaSitaProtocolDecoder extends BaseProtocolDecoder {
 
@@ -68,11 +74,19 @@ public class TeltonikaSitaProtocolDecoder extends BaseProtocolDecoder {
     public static final String PREAMBLE_2 = "";
     public static final String PREAMBLE_3 = "";
     public static final String PREAMBLE = PREAMBLE_1.concat(PREAMBLE_2).concat(PREAMBLE_3);
-    public static final String OID_REGEX = "^".concat(PREAMBLE).concat("OID=.*$");
-    public static final String TKT_REGEX = "^".concat(PREAMBLE).concat("TKT=.*$");
-    public static final String DUMP_REGEX = "^".concat(PREAMBLE).concat("DUMPALL");
-    public static final String TKT_ACK = PREAMBLE.concat("TKT ACK");
-    public static final String TICKETS_TERMINATOR = "\r\n";
+
+    public static final String DUMP_CMD = "DUMPALL";
+    public static final String TMS_CMD = "SENDTMS";
+    public static final String ATT_CMD = "SENDATT";
+    public static final String DRI_CMD = "SENDDRI";
+    public static final String VEH_CMD = "SENDVEH";
+    public static final String LIN_CMD = "SENDLIN";
+    public static final String GSTAT_CMD = "GETSTAT";
+    public static final String VEN_CMD = "VENABLE";
+    public static final String VDIS_CMD = "VDISABL";
+    public static final String VREBT_CMD = "VREBOOT";
+
+//    public static final String TICKETS_TERMINATOR = "\r\n";
 
     private void decodeSerial(Position position, ChannelBuffer buf, Channel channel) {
 
@@ -82,26 +96,75 @@ public class TeltonikaSitaProtocolDecoder extends BaseProtocolDecoder {
 
         String data = buf.readBytes(buf.readInt()).toString(StandardCharsets.US_ASCII);
 
-        if (data.matches(OID_REGEX)) {
-            position.set("oid", data.substring(PREAMBLE.length() + 4));
-            // no ACK for OID
-        } else if (data.split(TICKETS_TERMINATOR)[0].matches(TKT_REGEX)) {
-            position.set("tkt_list", data.substring(PREAMBLE.length() + 4,
-                    data.length() - TICKETS_TERMINATOR.length() - 4));
-            position.set("tkt_terminator", TICKETS_TERMINATOR);
-            if (channel != null) {
-                String crc = data.substring(data.lastIndexOf(TICKETS_TERMINATOR) + TICKETS_TERMINATOR.length());
-                String ack = TKT_ACK.concat(crc);
-                ChannelBuffer response = TeltonikaProtocolEncoder.encodeString(ack);
-                channel.write(response);
+        String command = data.substring(PREAMBLE.length(), PREAMBLE.length() + 7);
+        String content = data.substring(PREAMBLE.length() + 7, data.length());
+
+        JsonReader jsonReader = Json.createReader(new StringReader(content));
+        JsonObject contentJson = null;
+        try {
+            contentJson = jsonReader.readObject();
+            jsonReader.close();
+        } catch (JsonException e) {
+            return;
+        }
+
+        switch (command) {
+            case DUMP_CMD:
+                setDevicesStatus(contentJson, "dump");
+                break;
+            case TMS_CMD:
+                setDevicesStatus(contentJson, "set_timestamp");
+                break;
+            case ATT_CMD:
+                setDevicesStatus(contentJson, "set_attributes");
+                break;
+            case DRI_CMD:
+                setDevicesStatus(contentJson, "set_driver");
+                break;
+            case VEH_CMD:
+                setDevicesStatus(contentJson, "set_vehicle");
+                break;
+            case LIN_CMD:
+                setDevicesStatus(contentJson, "set_line");
+                break;
+            case GSTAT_CMD:
+                setDevicesStatus(contentJson, "get_status");
+                break;
+            case VEN_CMD:
+                setDevicesStatus(contentJson, "set_enable");
+                break;
+            case VDIS_CMD:
+                setDevicesStatus(contentJson, "set_disable");
+                break;
+            case VREBT_CMD:
+                setDevicesStatus(contentJson, "reboot");
+                break;
+            default:
+                position.set("command", data);
+                break;
+        }
+
+    }
+
+    private void setDevicesStatus(JsonObject json, String status) {
+
+        String company = null;
+        Integer id = null;
+        if (json.containsKey("company")) {
+            company = json.getString("company");
+        }
+        if (json.containsKey("device")) {
+            id = json.getInt("device");
+        }
+
+        DeviceManager deviceManager = Context.getDeviceManager();
+        for (Device device: deviceManager.getAllDevices()) {
+            Map attributes = device.getAttributes();
+            String deviceCompany = (String) attributes.get("company");
+            Integer deviceId = (Integer) attributes.get("device");
+            if (company == null || (company.equals(deviceCompany) && (id == null || id.equals(deviceId)))) {
+                device.set(status, 1);
             }
-        } else if (data.matches(DUMP_REGEX)) {
-            DeviceManager deviceManager = Context.getDeviceManager();
-            for (Device device: deviceManager.getAllDevices()) {
-                device.set("dump", true);
-            }
-        } else {
-            position.set("command", data);
         }
     }
 

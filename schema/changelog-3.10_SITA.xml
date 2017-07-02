@@ -10,7 +10,7 @@
 
     <createTable tableName="drivers_stampings">
       <column name="id" type="BIGINT(20)" autoIncrement="true">
-        <constraints primaryKey="true" />
+        <constraints nullable="false" primaryKey="true" />
       </column>
       <column name="imei" type="VARCHAR(255)">
         <constraints nullable="false" />
@@ -32,7 +32,7 @@
     <createTable tableName="ob_oblits">
       <!--obt_name, ticket_kind, nrecord, obl_ts, zone, line_code, line_name, vehicle_code, vehicle_name, ring, stoppoint_code, stoppoint_name, driver_code, driver_name, ticket_serial, ticket_id, ticket_type, ticket_duration, obl_result, dump_ts, deviceId, wrt_ts, ob_obt_id-->
       <column name="id" type="BIGINT(20)" autoIncrement="true">
-        <constraints nullable="false" />
+        <constraints nullable="false" primaryKey="true"/>
       </column>
       <column name="obt_name" type="VARCHAR(15)">
         <constraints nullable="false" />
@@ -101,7 +101,7 @@
 
     <addUniqueConstraint tableName="ob_oblits" columnNames="device_id, ticket_serial, obl_ts"
                          constraintName="uk_ob_oblits" />
-    <addPrimaryKey tableName="ob_oblits" columnNames="id, obt_name" constraintName="pk_obt"/>
+    <!--<addPrimaryKey tableName="ob_oblits" columnNames="obt_name" constraintName="pk_obt"/>-->
 
   </changeSet>
 

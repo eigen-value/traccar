@@ -30,12 +30,17 @@ import org.traccar.model.Device;
 import org.traccar.model.Network;
 import org.traccar.model.Position;
 
+import javax.json.JsonObjectBuilder;
+import javax.json.Json;
+import javax.json.JsonObject;
+
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.LinkedList;
+import java.util.Date;
+import java.util.Map;
 
 public class TeltonikaProtocolDecoder extends BaseProtocolDecoder {
 
@@ -73,7 +78,17 @@ public class TeltonikaProtocolDecoder extends BaseProtocolDecoder {
     public static final String TKT_REGEX = "^".concat(PREAMBLE).concat("TKT=.*$");
     public static final String TKT_ACK = PREAMBLE.concat("TKT ACK");
     public static final String DO_DUMP = PREAMBLE.concat("DO DUMP");
+    public static final String SET_TMS = PREAMBLE.concat("SET TMS");
+    public static final String SET_DRI = PREAMBLE.concat("SET DRI");
+    public static final String SET_VEH = PREAMBLE.concat("SET VEH");
+    public static final String SET_LIN = PREAMBLE.concat("SET LIN");
+    public static final String SET_ATTR = PREAMBLE.concat("SETATTR");
+    public static final String VENABLE = PREAMBLE.concat("VENABLE");
+    public static final String VDISABL = PREAMBLE.concat("VDISABL");
+    public static final String VREBOOT = PREAMBLE.concat("VREBOOT");
+    public static final String GETSTAT = PREAMBLE.concat("GETSTAT");
     public static final String TICKETS_TERMINATOR = "\r\n";
+    public static final Integer MAX_SEND_RETRY = 1;
 
     private void decodeSerial(Position position, ChannelBuffer buf, Channel channel) {
 
@@ -320,18 +335,148 @@ public class TeltonikaProtocolDecoder extends BaseProtocolDecoder {
                 response.writeInt(count);
                 channel.write(response);
 
-//                Send DO_DUMP command if device is in dump mode
+//              Send commands according to device status
                 DeviceManager deviceManager = Context.getDeviceManager();
                 Device device = deviceManager.getDeviceById(deviceSession.getDeviceId());
-                if (device.getBoolean("dump")) {
-                    ChannelBuffer dumpCommand = TeltonikaProtocolEncoder.encodeString(DO_DUMP);
-                    channel.write(dumpCommand);
-                    device.set("dump", false);
-                }
+                processStatus(device, channel);
+
             }
         }
 
         return positions;
+    }
+
+    private void processStatus(Device device, Channel channel) {
+        Map attributes = device.getAttributes();
+
+        if (device.getInteger("dump") > 0 && device.getInteger("dump") <= MAX_SEND_RETRY) {
+            ChannelBuffer dumpCommand = TeltonikaProtocolEncoder.encodeString(DO_DUMP);
+            channel.write(dumpCommand);
+            device.set("dump", device.getInteger("dump") + 1);
+        }
+        if (device.getInteger("set_timestamp") > 0
+                && device.getInteger("set_timestamp") <= MAX_SEND_RETRY) {
+            Date now = new Date();
+            long timestamp = now.getTime();
+
+            JsonObjectBuilder builder = Json.createObjectBuilder().
+                    add("time", timestamp);
+            JsonObject payload = builder.build();
+
+            String command = SET_TMS.concat(" ").concat(payload.toString());
+            ChannelBuffer dumpCommand = TeltonikaProtocolEncoder.encodeString(command);
+            channel.write(dumpCommand);
+            device.set("set_timestamp", device.getInteger("set_timestamp") + 1);
+        }
+        if (device.getInteger("set_attributes") > 0
+                && device.getInteger("set_attributes") <= MAX_SEND_RETRY) {
+            Date now = new Date();
+            long timestamp = now.getTime();
+
+            JsonObjectBuilder builder = Json.createObjectBuilder();
+
+            builder.add("time", Long.toString(timestamp));
+            if (attributes.containsKey("driver_name")) {
+                builder.add("dri_name", (String) attributes.get("driver_name"));
+            }
+            if (attributes.containsKey("driver_id")) {
+                builder.add("dri_id", (Integer) attributes.get("driver_id"));
+            }
+            if (attributes.containsKey("vehicle_name")) {
+                builder.add("veh_name", (String) attributes.get("vehicle_name"));
+            }
+            if (attributes.containsKey("vehicle_id")) {
+                builder.add("veh_id", (Integer) attributes.get("vehicle_id"));
+            }
+            if (attributes.containsKey("line_name")) {
+                builder.add("lin_name", (String) attributes.get("line_name"));
+            }
+            if (attributes.containsKey("line_id")) {
+                builder.add("lin_id", (Integer) attributes.get("line_id"));
+            }
+
+            JsonObject payload = builder.build();
+            String command = SET_ATTR.concat(" ").concat(payload.toString());
+            ChannelBuffer dumpCommand = TeltonikaProtocolEncoder.encodeString(command);
+            channel.write(dumpCommand);
+            device.set("set_attributes", device.getInteger("set_attributes") + 1);
+        }
+        if (device.getInteger("set_driver") > 0
+                && device.getInteger("set_driver") <= MAX_SEND_RETRY) {
+
+            JsonObjectBuilder builder = Json.createObjectBuilder();
+
+            if (attributes.containsKey("driver_name")) {
+                builder.add("name", (String) attributes.get("driver_name"));
+            }
+            if (attributes.containsKey("driver_id")) {
+                builder.add("id", (Integer) attributes.get("driver_id"));
+
+                JsonObject payload = builder.build();
+                String command = SET_DRI.concat(" ").concat(payload.toString());
+                ChannelBuffer dumpCommand = TeltonikaProtocolEncoder.encodeString(command);
+                channel.write(dumpCommand);
+                device.set("set_driver", device.getInteger("set_driver") + 1);
+            }
+        }
+        if (device.getInteger("set_vehicle") > 0
+                && device.getInteger("set_vehicle") <= MAX_SEND_RETRY) {
+            JsonObjectBuilder builder = Json.createObjectBuilder();
+
+            if (attributes.containsKey("vehicle_name")) {
+                builder.add("name", (String) attributes.get("vehicle_name"));
+            }
+            if (attributes.containsKey("vehicle_id")) {
+                builder.add("id", (Integer) attributes.get("vehicle_id"));
+
+                JsonObject payload = builder.build();
+                String command = SET_VEH.concat(" ").concat(payload.toString());
+                ChannelBuffer dumpCommand = TeltonikaProtocolEncoder.encodeString(command);
+                channel.write(dumpCommand);
+                device.set("set_vehicle", device.getInteger("set_vehicle") + 1);
+            }
+        }
+        if (device.getInteger("set_line") > 0
+                && device.getInteger("set_line") <= MAX_SEND_RETRY) {
+            JsonObjectBuilder builder = Json.createObjectBuilder();
+
+            if (attributes.containsKey("line_name")) {
+                builder.add("name", (String) attributes.get("line_name"));
+            }
+            if (attributes.containsKey("line_id")) {
+                builder.add("id", (Integer) attributes.get("line_id"));
+
+                JsonObject payload = builder.build();
+                String command = SET_LIN.concat(" ").concat(payload.toString());
+                ChannelBuffer dumpCommand = TeltonikaProtocolEncoder.encodeString(command);
+                channel.write(dumpCommand);
+                device.set("set_line", device.getInteger("set_line") + 1);
+            }
+        }
+        if (device.getInteger("get_status") > 0
+                && device.getInteger("get_status") <= MAX_SEND_RETRY) {
+            ChannelBuffer dumpCommand = TeltonikaProtocolEncoder.encodeString(GETSTAT);
+            channel.write(dumpCommand);
+            device.set("get_status", device.getInteger("get_status") + 1);
+        }
+        if (device.getInteger("set_enable") > 0
+                && device.getInteger("set_enable") <= MAX_SEND_RETRY) {
+            ChannelBuffer dumpCommand = TeltonikaProtocolEncoder.encodeString(VENABLE);
+            channel.write(dumpCommand);
+            device.set("set_enable", device.getInteger("set_enable") + 1);
+        }
+        if (device.getInteger("set_disable") > 0
+                && device.getInteger("set_disable") <= MAX_SEND_RETRY) {
+            ChannelBuffer dumpCommand = TeltonikaProtocolEncoder.encodeString(VDISABL);
+            channel.write(dumpCommand);
+            device.set("set_disable", device.getInteger("set_disable") + 1);
+        }
+        if (device.getInteger("reboot") > 0
+                && device.getInteger("reboot") <= MAX_SEND_RETRY) {
+            ChannelBuffer dumpCommand = TeltonikaProtocolEncoder.encodeString(VREBOOT);
+            channel.write(dumpCommand);
+            device.set("reboot", device.getInteger("reboot") + 1);
+        }
     }
 
     @Override
