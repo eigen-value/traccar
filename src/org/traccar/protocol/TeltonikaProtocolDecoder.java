@@ -76,6 +76,8 @@ public class TeltonikaProtocolDecoder extends BaseProtocolDecoder {
     public static final String PREAMBLE = PREAMBLE_1.concat(PREAMBLE_2).concat(PREAMBLE_3);
     public static final String OID_REGEX = "^".concat(PREAMBLE).concat("OID=.*$");
     public static final String TKT_REGEX = "^".concat(PREAMBLE).concat("TKT=.*$");
+    public static final String ACK_REGEX = "^".concat(PREAMBLE).concat("ACK=.*$");
+    public static final String STA_REGEX = "^".concat(PREAMBLE).concat("STA=.*$");
     public static final String TKT_ACK = PREAMBLE.concat("TKT ACK");
     public static final String DO_DUMP = PREAMBLE.concat("DO DUMP");
     public static final String SET_TMS = PREAMBLE.concat("SET TMS");
@@ -98,9 +100,12 @@ public class TeltonikaProtocolDecoder extends BaseProtocolDecoder {
 
         String data = buf.readBytes(buf.readInt()).toString(StandardCharsets.US_ASCII);
 
+        DeviceManager deviceManager = Context.getDeviceManager();
+        Device device = deviceManager.getDeviceById(position.getDeviceId());
+
         if (data.matches(OID_REGEX)) {
             position.set("oid", data.substring(PREAMBLE.length() + 4));
-            // no ACK for OID
+        // no ACK for OID
         } else if (data.split(TICKETS_TERMINATOR)[0].matches(TKT_REGEX)) {
             position.set("tkt_list", data.substring(PREAMBLE.length()
                     + 4, data.length() - TICKETS_TERMINATOR.length() - 4));
@@ -111,6 +116,39 @@ public class TeltonikaProtocolDecoder extends BaseProtocolDecoder {
                 ChannelBuffer response = TeltonikaProtocolEncoder.encodeString(ack);
                 channel.write(response);
             }
+        } else if (data.split(TICKETS_TERMINATOR)[0].matches(ACK_REGEX)) {
+            String ackType = data.substring(PREAMBLE.length() + 4, data.length()).split(TICKETS_TERMINATOR)[0];
+            switch (ackType) {
+                case "TMS":
+                    device.set("set_timestamp", 0);
+                    break;
+                case "DRI":
+                    device.set("set_driver", 0);
+                    break;
+                case "VEH":
+                    device.set("set_vehicle", 0);
+                    break;
+                case "LIN":
+                    device.set("set_line", 0);
+                    break;
+                case "VREBOOT":
+                    device.set("reboot", 0);
+                    break;
+                case "VENABLE":
+                    device.set("set_enable", 0);
+                    break;
+                case "VDISABLE":
+                    device.set("set_disable", 0);
+                    break;
+                case "SETATTR":
+                    device.set("set_attributes", 0);
+                    break;
+                default:
+                    break;
+            }
+        } else if (data.split(TICKETS_TERMINATOR)[0].matches(STA_REGEX)) {
+            // todo save validators status
+            device.set("get_status", 0);
         } else {
             position.set("command", data);
         }
